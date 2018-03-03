@@ -292,4 +292,4 @@ char choose_suffix(char prefix){
 
 	return ((curr_table_index == '@') ? ' ' : curr_table_index);  // return the actual character
 }
-}
+
