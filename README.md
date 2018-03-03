@@ -1,6 +1,6 @@
 # Travesty 
 
-# the main program, function prototypes, and global variables are in the cpp file
+# the main program, function prototypes and definitions, and global variables are in the cpp file
 
 program description:
   an english text is given as input.  the program will read in
