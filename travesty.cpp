@@ -113,5 +113,183 @@ int main() {
 			cout << endl;
 		
 		}	
-    } 	
+    } 
+	//*********************
+// function definitions
+//*********************
+
+unsigned random(unsigned limit) {
+	return (rand() % limit + 1);
+}
+
+void initialize_travesty() {
+	//initialize 2 tables
+	//one for prefix count and one for suffix count
+	//prefix and suffix tables first element is '@' which is blank
+	
+	//initialize prefix count table
+	for(int i=0; i < NUM_TABLE_INDEX; i++) {
+		prefix_count[i] = 0;
+	}
+	//initialize suffix count wrt prefix 2D array table and set all values to 0
+	for(int i=0; i < NUM_TABLE_INDEX; i++){
+		for(int j=0; j<NUM_TABLE_INDEX;j++){
+			suffix_count_wrt_prefix[i][j] = 0;
+		}
+	}
+}
+
+void update_travesty(char prefix, char s) {
+	//increment the particular prefix count in prefix table
+	//increment suffix count in the suffix table
+	int count = 0; //if prefix is found count is incremented and exit the loop
+	int index = 0; //save the index of where the prefix was found
+	
+	//loop through prefix table to find the char
+	for (int i=0;i < NUM_TABLE_INDEX; i++) {
+		//check for spaces since '@' stands for space
+	    //once found break out of loop
+		if(prefix == ' ' || prefix == '\n') {
+			prefix_count[0] += 1;
+			count++; 
+			total_prefix_count++;
+			break;
+		}
+		//increment count in the prefix table if found
+		if(table_index[i] == prefix) {
+			prefix_count[i] += 1;
+			total_prefix_count++;
+			count++;
+			index = i;
+			break;
+		}
+	}
+	
+	//if prefix is found 
+	if (count == 1) {
+		//loop through suffix table to find suffix wrt prefix
+		//Example prefix is A and suffix is B
+		//suffix count is incremented in array[1][2]
+		//start at the index where prefix is
+		for(int i=index; i < NUM_TABLE_INDEX; i++){
+			for(int j=0; j<NUM_TABLE_INDEX;j++){
+				//check for '.' and add it to [0][0]
+			    //note: '.' equals two spaces which equals to 2 '@'
+			    if(s == '.' || s == ' ' || s == '\n') {
+			        suffix_count_wrt_prefix[index][0] += 1;
+			        break;
+	        	}
+				
+				//increment count when suffix is found and break out of loop
+			    if (table_index[j] == s){
+				    suffix_count_wrt_prefix[index][j] += 1;
+			    	break;
+			    }	
+		    }
+		  break;
+		}
+	}
+	
+	
+}
+
+void print_travesty(){
+	//prefix table and suffix table will be combined into 1 giant table
+	
+	//count and prefix labels
+	cout << setw(5) << "CNT" << setw(5) << "PFX";
+	
+	for(int i=0; i < NUM_TABLE_INDEX; i++) {
+	    //print table index horizontally
+		cout << setw(5) << table_index[i] ;
+	}
+	
+	cout << endl;
+	
+	//print prefix count table and suffix table together
+	//1D array and 2D array visually merged into one table 
+	//note: remember prefix table indices are rows and not columns
+	for(int i=0; i < NUM_TABLE_INDEX; i++) {
+	    //prints out the count for each char in the table_index
+		//count is displayed on the left for prefix
+		cout << setw(5) << prefix_count[i] << setw(5) << table_index[i];
+		
+		//count of suffixes wrt prefix is arranged to be printed 
+		//with prefix table so only 1 table is shown
+		for(int j=0; j<NUM_TABLE_INDEX;j++){
+		    //prints the suffix count on the right of the table_index column
+			cout << setw(5) << suffix_count_wrt_prefix[i][j];
+		}
+		//go to next line after a row of 27
+		cout << endl;
+	}
+	
+	cout << endl;
+	
+	//print the total prefix count
+	cout << "The total prefix count is " << total_prefix_count << endl;
+}
+
+char choose_prefix() {
+	unsigned r, accum;
+	char curr_table_index;
+
+	r = random(total_prefix_count); // pick a number r that is randomly and uniformly distributed between 1 and total_prefix_count
+
+	accum = 0;
+	curr_table_index = '@'-1; // the character, '?',  precedes '@'
+	while (accum < r) {
+	   curr_table_index++;  // the succeed character
+	   accum += prefix_count[curr_table_index-'@']; // accumulate the frequency of each prefix
+	}
+
+	return ((curr_table_index == '@') ? ' ' : curr_table_index);  // return the actual character
+}
+
+char choose_suffix(char prefix){
+	//global variables needed: total prefix count, suffix count
+	//Ex. if prefix is 'A' choose suffix based on how common the char would follow the prefix 'A'
+	//frequency formula = suffix count for 'A'/prefix count for 'A'
+	unsigned r, accum;
+	char curr_table_index;
+	int index = 0;	//index of where prefix is located
+	int count = 1; //holds the prefix count of the particular char, default is 1
+	
+	//find where the prefix is in the table and save the count of that prefix 
+	for(int i = 0; i < NUM_TABLE_INDEX; i++){
+		//if found then index of prefix is saved
+		if (table_index[i] == prefix) {
+			index = i;
+			//if prefix count is bigger than 1 then update variable for count
+			//break out of loop when prefix is found 
+			if (prefix_count[i] > 1)
+				count = prefix_count[i];
+			break;
+		}
+		
+	}
+
+	//smallest r can be is 1
+	r = random(count); // pick a number r that is randomly and uniformly distributed between 1 and prefix count
+	//random method ex: 78%3 + 1 = 27
+
+	accum = 0;
+	curr_table_index = '@'-1; // the character, '?',  precedes '@'
+
+	//if no suffix follows the chose prefix then suffix must be chosen randomly
+	int rsuffix = 0; //index of random suffix 
+
+	while (accum < r) {
+		curr_table_index++;  // the succeed character
+		if (curr_table_index == 'Z' + 1 && accum < r) {
+			accum += r;
+			rsuffix = random(NUM_TABLE_INDEX)-1;
+			curr_table_index = table_index[rsuffix];
+			break;
+		}
+		accum += suffix_count_wrt_prefix[index][curr_table_index-'@']; // accumulate the frequency of each suffix
+	}
+
+	return ((curr_table_index == '@') ? ' ' : curr_table_index);  // return the actual character
+}
 }
